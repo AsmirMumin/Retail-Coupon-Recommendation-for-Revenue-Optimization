@@ -12,18 +12,15 @@ def generate_dataset(path):
             coupon_df = pd.read_parquet(path + '/coupons.parquet')
             #negative samples generate randomly from the customer preference with the length i of the corresponding week j
             negative_sample_df = pd.read_parquet(path + '/df_negative_samples.parquet')
-            #categories among products that were created with TSNE
-            categories = pd.read_csv(path + '/product_categories.csv')
-            
+    
             #shrink dataframe to only the 2000 shopper that we need to make predictions for
             basket_df = basket_df[basket_df['shopper'] < 2000]
             coupon_df = coupon_df[coupon_df['shopper'] < 2000]
     
-            'Merge Data Sets'
+            #merge data sets,
             data = pd.merge(basket_df, coupon_df, on = ['week', 'shopper', 'product'], how = 'outer')
             data = pd.merge(data, negative_sample_df, on = ['week', 'shopper', 'product'], how = 'outer')
-            data = pd.merge(data, categories, on = ['product'], how = 'left')
-    
+            
             'Feature Engineering Part I'
             #replace NaN value of the col discount with 0 aka no discount
             data['discount'] = data['discount'].replace(np.nan, 0)
@@ -171,7 +168,7 @@ def generate_dataset(path):
             data['customer_prod_dis_offer_share'] = data['customer_prod_dis_offer_share'].replace(np.nan, -1)
         
             'Unit Test Block II'
-            assert len(list(data.columns)) == 32
+            assert len(list(data.columns)) == 31
             assert data.isna().sum().sum() == 0
             assert data['product_bought'].nunique() == 2
             
