@@ -1,7 +1,32 @@
+"""
+The purpose of this module is to:
+    * split the generated train and test set into appropriate training and testing sets for tuning the model
+    
+Prerequisite: 
+    * A feature-engineered train and test set is needed as an input, e.g. output from module_generate data set
+"""
+
+#load libraries
 import pandas as pd
 
-def train_test_splitting(path, train_start, train_end, test_start, test_end, eval_set = True):
+def train_test_splitting(path, train_start, train_end, test_start, test_end, eval_set = False):
     
+    """
+    input:  
+        path: path to feature engineered train and test dataset
+        train_start: lower boundary (week) of the training set 
+        train_end: upper boundary (week) of the training set
+        test_start: lower boundary (week) of the testing set
+        test_end: upper boundary (week) of the testing set
+        eval_set: default = False, whether to generate also an evaluation set or not
+    output: 
+        X_train: training set without target variable
+        X_test: testing set without target variable
+        y_train: training set containing only target variable
+        y_test: testing set containing only target variable
+        optional: X_eval, y_test
+    """
+        
     #takes data sets that are created by the module 'module_generate_dataset.py'
     train = pd.read_parquet(path + '/train_s2000_final.parquet')
     test = pd.read_parquet(path + '/test_s2000_final.parquet')

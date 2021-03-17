@@ -1,7 +1,59 @@
+"""
+The purpose of this module is to:
+* generate datasets that can be used for the training and testing the model
+
+Note: The split in train and test set before feature engineering is essential since bias in the features are reduced. For instance, the later training set only contains characteristics of the data set that was subsetted for training purposes. We aim to make the model more generizable with this.
+
+Prerequisite: 
+* The following datasets should be downloaded/generated and named: 
+    * download: baskets.parquet, coupons.parquet
+    * create: df_negative_samples.parquet, product_categories.csv, avg_no_weeks_between_two_purchases.parquet, lags.parquet, purchase_temporal_distribution.parquet
+
+* Table of Content:
+    Train+Test
+    * Load Data Sets
+    * Merge Data Sets
+    * Feature Engineering Part I
+    * Unit Test Block I
+    * Train-Test-Split
+    * Clear Memory
+    Train
+    * Feature Engineering Part II.a
+    * Clear Memory
+    * Feature Engineering Part III.a
+    * Imputing/Fixing Missing Values
+    * Unit Test Block II.a
+    * Store data_train
+    Test
+    * Feature Engineering Part II.b
+    * Clear Memory
+    * Feature Engineering Part III.b
+    * Imputing/Fixing Missing Values
+    * Unit Test Block II.b
+    * Store data_test
+    Train+Test
+    * Unit Test Block III
+    
+"""
+
 import pandas as pd
 import numpy as np
 
 def generate_dataset(path, train_start, train_end, test_start, test_end):
+    
+    """
+    input: 
+        path: path where data sets are stored -> outputted data sets are saved as train_s2000_final.parquet and test_s2000_final.parquet in the pwd
+        train_start: first week that the training set should start with
+        train_end: the last week the training set should end with
+        test_start: analogue to train
+        test_end: analogue to train
+    
+    output: 
+        data_train: engineered training set
+        data_test: engineered testing set
+     
+    """
     
     print('The dataframes should be named: \nbaskets.parquet, \ncoupons.parquet, \ndf_negative_samples.parquet, \nproduct_categories.csv, \navg_no_weeks_between_two_purchases.parquet, \nlags.parquet and \npurchase_temporal_distribution.parquet')
     
@@ -13,12 +65,13 @@ def generate_dataset(path, train_start, train_end, test_start, test_end):
     #negative samples generate randomly from the customer preference with the length i of the corresponding week j
     negative_sample_df = pd.read_parquet(path + '/df_negative_samples.parquet')
     #categories among products that were created with TSNE
-    categories = pd.read_csv(path + '/product_categories.csv')
+    categories = pd.read_csv(path + '/product_categories.csv', sep = ',')
     #average number of week that passed between two purchases
     avg_no_weeks_between_two_purchases = pd.read_parquet(path + '/avg_no_weeks_between_two_purchases.parquet')
     #time that has passed since the shopper i bought product j the last time
     lags = pd.read_parquet(path + '/lags.parquet')
     lags = lags.drop('product_bought', axis=1)
+    lags = lags[lags['week'] <= 89]
     #distribution of purchases, e.g whether they occurs frequently or rather in the first/last half of the timeseries
     purchase_temporal_distribution = pd.read_parquet(path + '/purchase_temporal_distribution.parquet')
     
