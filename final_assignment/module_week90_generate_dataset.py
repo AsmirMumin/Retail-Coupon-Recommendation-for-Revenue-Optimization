@@ -1,7 +1,29 @@
+"""
+The purpose of this module is to:
+* generate a dataset that can be used for the prediction for week90
+
+In order to achieve this, the same feature engineering is applied as for the construction of the train and test set
+
+Prerequisite: 
+* The following datasets should be downloaded/generated and named: 
+    * download: baskets.parquet, coupons.parquet
+    * create: df_negative_samples.parquet, product_categories.csv, avg_no_weeks_between_two_purchases.parquet, lags.parquet, purchase_temporal_distribution.parquet
+
+"""
+
+#load libraries
 import pandas as pd
 import numpy as np
 
 def week90_generate_dataset(path):
+    
+    """
+    input: 
+        path: path to datasets -> outputted data set is also saved as /week90_s2000_final.parquet to this path
+    output: 
+        week90: dataset for week90 
+    
+    """
     
     print('The dataframes should be named: \nbaskets.parquet, \ncoupons.parquet, \ndf_negative_samples.parquet, \nproduct_categories.csv, \navg_no_weeks_between_two_purchases.parquet, \nlags.parquet and \npurchase_temporal_distribution.parquet')
     
@@ -20,7 +42,6 @@ def week90_generate_dataset(path):
     lags = pd.read_parquet(path + '/lags.parquet')
     lags = lags.drop('product_bought', axis=1)
     lags90 = lags[lags['week'] == 90]
-    lags = lags[lags['week'] <= 89]
     #distribution of purchases, e.g whether they occurs frequently or rather in the first/last half of the timeseries
     purchase_temporal_distribution = pd.read_parquet(path + '/purchase_temporal_distribution.parquet')
     
@@ -32,19 +53,12 @@ def week90_generate_dataset(path):
     data = pd.merge(basket_df, coupon_df, on=['week', 'shopper', 'product'], how='outer')
     data = pd.merge(data, negative_sample_df, on=['week', 'shopper', 'product'], how='outer')
     data = pd.merge(data, categories, on=['product'], how='left')
-    data = pd.merge(data, avg_no_weeks_between_two_purchases, on=['shopper', 'product'], how='left')
-    data = pd.merge(data, lags, on=['shopper', 'product', 'week'], how='left')
-    data = pd.merge(data, purchase_temporal_distribution, on=['shopper', 'product'], how='left')
     
-    lags90 = pd.merge(lags90, categories, on=['product'], how='left')
-    lags90 = pd.merge(lags90, avg_no_weeks_between_two_purchases, on=['shopper', 'product'], how='left')
-    lags90 = pd.merge(lags90, purchase_temporal_distribution, on=['shopper', 'product'], how='left')
+    week90 = pd.merge(lags90, categories, on=['product'], how='left')
+    week90 = pd.merge(week90, avg_no_weeks_between_two_purchases, on=['shopper', 'product'], how='left')
+    week90 = pd.merge(week90, purchase_temporal_distribution, on=['shopper', 'product'], how='left')
     
     'Feature Engineering Part I'
-    #missing values are imputed with -1 (=never bought) since there missing not differentiates from the pure absense (0)
-    data['avg_no_weeks_between_two_purchases'] = data['avg_no_weeks_between_two_purchases'].replace(np.nan, -1)
-    data['purchase_temporal_distribution'] = data['purchase_temporal_distribution'].replace(np.nan, -1)
-    data['lag_weeks_of_product_per_customer'] = data['lag_weeks_of_product_per_customer'].replace(np.nan, -1)
     #replace NaN value of the col discount with 0 aka no discount
     data['discount'] = data['discount'].replace(np.nan, 0)
     #for now replace missing prices with 0, later we will adjust them by the price with the corresponding discount
@@ -61,8 +75,8 @@ def week90_generate_dataset(path):
     data['discount_effect'] = np.where(((data.discount_offered == 1) & (data.product_bought == 1)), 1, 0)
 
     #missing values are imputed with -1 (=never bought) since there missing not differentiates from the pure absense (0)
-    lags90['avg_no_weeks_between_two_purchases'] = lags90['avg_no_weeks_between_two_purchases'].replace(np.nan, -1)
-    lags90['purchase_temporal_distribution'] = lags90['purchase_temporal_distribution'].replace(np.nan, -1)
+    week90['avg_no_weeks_between_two_purchases'] = week90['avg_no_weeks_between_two_purchases'].replace(np.nan, -1)
+    week90['purchase_temporal_distribution'] = week90['purchase_temporal_distribution'].replace(np.nan, -1)
     
     'Unit Test Block I'    
     assert data['shopper'].nunique() == 2000 
@@ -75,10 +89,10 @@ def week90_generate_dataset(path):
     assert min(data['week']) == 0
     assert data.isna().sum().sum() == 0
     
-    assert lags90['shopper'].nunique() == 2000
-    assert max(lags90['week']) == 90
-    assert min(lags90['week']) == 90
-    assert lags90.isna().sum().sum() == lags90.shape[0]
+    assert week90['shopper'].nunique() == 2000
+    assert max(week90['week']) == 90
+    assert min(week90['week']) == 90
+    assert week90.isna().sum().sum() == week90.shape[0]
     
     'Clear Memory'
     del basket_df
@@ -90,8 +104,8 @@ def week90_generate_dataset(path):
     #maximal price of product
     max_price = data.groupby('product')['price'].agg(max).reset_index()
     max_price = max_price.rename(columns = {'price': 'max_price'})
-    #merge max price to lags90
-    lags90 = pd.merge(lags90, max_price, on = 'product', how = 'left')
+    #merge max price to week90
+    week90 = pd.merge(week90, max_price, on = 'product', how = 'left')
     
     'Clear Memory'
     del max_price
@@ -101,84 +115,84 @@ def week90_generate_dataset(path):
     #CUSTOMER DIMENSION 
     #no_products_bought: number products bought by a customer i      
     tmp = data[(data['product_bought'] == 1)].groupby(['shopper'])['product'].agg('count').reset_index().rename(columns={'product': 'no_products_bought'})
-    lags90 = pd.merge(lags90, tmp, on='shopper', how='left')
+    week90 = pd.merge(week90, tmp, on='shopper', how='left')
     #spend_per_customer: Customer Lifetime Value (sum € spend by a customer i
     tmp = data[(data['product_bought'] == 1)].groupby(['shopper'])['price'].agg('sum').reset_index().rename(columns={'price': 'spend_per_customer'})
-    lags90 = pd.merge(lags90, tmp, on='shopper', how='left')
+    week90 = pd.merge(week90, tmp, on='shopper', how='left')
     #no_unique_products: number unique products bought by customer i 
     tmp = data[(data['product_bought'] == 1)].groupby(['shopper'])['product'].agg('nunique').reset_index().rename(columns={'product': 'no_unique_products'})
-    lags90 = pd.merge(lags90, tmp, on='shopper', how='left')
+    week90 = pd.merge(week90, tmp, on='shopper', how='left')
     #discount_purchase: number products bought at discount by a customer i 
     tmp = data[(data['product_bought'] == 1)].groupby(['shopper'])['discount_offered'].agg('sum').reset_index().rename(columns={'discount_offered': 'discount_purchase'})
-    lags90 = pd.merge(lags90, tmp, on='shopper', how='left')
+    week90 = pd.merge(week90, tmp, on='shopper', how='left')
     
     #--------------------------
             
     #PRODUCT DIMENSION
     #product_sells: number of times the product was sold        
     tmp = data[(data['product_bought'] == 1)].groupby(['product'])['price'].agg('count').reset_index().rename(columns={'price': 'product_sells'})
-    lags90 = pd.merge(lags90, tmp, on='product', how='left')
+    week90 = pd.merge(week90, tmp, on='product', how='left')
     #product_dis_sells: number of times a product was bought with a discount
     tmp = data[(data['product_bought'] == 1)].groupby(['product'])['discount_offered'].agg('sum').reset_index().rename(columns={'discount_offered': 'product_dis_sells'})
-    lags90 = pd.merge(lags90, tmp, on='product', how='left')
+    week90 = pd.merge(week90, tmp, on='product', how='left')
     #product_dis_sells_share
-    lags90['product_dis_sells_share'] = lags90['product_dis_sells'] / lags90['product_sells']
+    week90['product_dis_sells_share'] = week90['product_dis_sells'] / week90['product_sells']
     
      #--------------------------
             
     #CUSTOMER X PRODUCT DIMENSION
     #no_products_bought_per_product: no product j purchases for customer i         
     tmp = data[(data['product_bought'] == 1)].groupby(['shopper', 'product'])['price'].agg('count').reset_index().rename(columns={'price': 'no_products_bought_per_product'})
-    lags90 = pd.merge(lags90, tmp, on=['shopper', 'product'], how='left')
+    week90 = pd.merge(week90, tmp, on=['shopper', 'product'], how='left')
     #customer_prod_dis_purchases: number purchases of a product j at discount by customer i 
     tmp = data[(data['product_bought'] == 1)].groupby(['shopper', 'product'])['discount_effect'].agg('sum').reset_index().rename(columns={'discount_effect': 'customer_prod_dis_purchases'})
-    lags90 = pd.merge(lags90, tmp, on=['shopper', 'product'], how='left')
+    week90 = pd.merge(week90, tmp, on=['shopper', 'product'], how='left')
     #customer_prod_bought_dis_share: share a product j is bought at a discount by customer i 
     tmp = data[(data['product_bought'] == 1)].groupby(['shopper', 'product'])['discount_effect'].agg('mean').reset_index().rename(columns={'discount_effect': 'customer_prod_bought_dis_share'})
-    lags90 = pd.merge(lags90, tmp, on=['shopper', 'product'], how='left')
+    week90 = pd.merge(week90, tmp, on=['shopper', 'product'], how='left')
     #customer_prod_dis_offers: number discount offers of a product j for customer i
     tmp = data.groupby(['shopper', 'product'])['discount_offered'].agg('count').reset_index().rename(columns={'discount_offered': 'customer_prod_dis_offers'})
-    lags90 = pd.merge(lags90, tmp, on=['shopper', 'product'], how='left')
+    week90 = pd.merge(week90, tmp, on=['shopper', 'product'], how='left')
     #customer_prod_dis_share: share product j was offered at discount and bought by customer i
     tmp = data[(data['product_bought'] == 1)].groupby(['shopper', 'product'])['discount_offered'].agg('mean').reset_index().rename(columns={'discount_offered': 'customer_prod_dis_share'})
-    lags90 = pd.merge(lags90, tmp, on=['shopper', 'product'], how='left')
+    week90 = pd.merge(week90, tmp, on=['shopper', 'product'], how='left')
     #customer_prod_dis_offered_share: share of deemed coupons per customer i
     tmp = data[(data['discount_offered'] == 1)].groupby(['shopper', 'product'])['product_bought'].agg('mean').reset_index().rename(columns={'product_bought': 'customer_prod_dis_offered_share'})
-    lags90 = pd.merge(lags90, tmp, on=['shopper', 'product'], how='left')
+    week90 = pd.merge(week90, tmp, on=['shopper', 'product'], how='left')
     #customer_product_share: share of product j was bought by customer i in comparison to all other products that were bought by customer i
-    lags90['customer_product_share'] = lags90['no_products_bought_per_product'] / lags90['no_products_bought']
+    week90['customer_product_share'] = week90['no_products_bought_per_product'] / week90['no_products_bought']
     #customer_mean_product_price: average price of an item bought by a customer i 
-    lags90['customer_mean_product_price'] = lags90['spend_per_customer'] / lags90['no_products_bought']
+    week90['customer_mean_product_price'] = week90['spend_per_customer'] / week90['no_products_bought']
     #customer_discount_buy_share: the percentage of products bought at discount by customer i
-    lags90['customer_discount_buy_share'] = lags90['discount_purchase'] / lags90['no_products_bought']
+    week90['customer_discount_buy_share'] = week90['discount_purchase'] / week90['no_products_bought']
     
     #--------------------------
     
     #WEEK X CUSTOMER DIMENSION & #CUSTOMER DIMENSION
-    #weekly feature on can be adapted to the lags90 data set because we don't know anything about the exact purchase behaviour in week 90 yet
+    #weekly feature on can be adapted to the week90 data set because we don't know anything about the exact purchase behaviour in week 90 yet
     
     #--------------------------
                      
     'Imputing/Fixing Missing Values'
     #some shopper never bought a product, even not when it was e.g. discounted; this is valuabe information, therefore, NaNs are set to -1
-    lags90['customer_product_share'] = lags90['customer_product_share'].replace(np.nan, -1)
-    lags90['no_products_bought_per_product'] = lags90['no_products_bought_per_product'].replace(np.nan, -1)
-    lags90['customer_prod_dis_purchases'] = lags90['customer_prod_dis_purchases'].replace(np.nan, -1)
-    lags90['customer_prod_bought_dis_share'] = lags90['customer_prod_bought_dis_share'].replace(np.nan, -1)
-    lags90['customer_prod_dis_share'] = lags90['customer_prod_dis_share'].replace(np.nan, -1)
-    lags90['customer_prod_dis_offered_share'] = lags90['customer_prod_dis_offered_share'].replace(np.nan, -1)
+    week90['customer_product_share'] = week90['customer_product_share'].replace(np.nan, -1)
+    week90['no_products_bought_per_product'] = week90['no_products_bought_per_product'].replace(np.nan, -1)
+    week90['customer_prod_dis_purchases'] = week90['customer_prod_dis_purchases'].replace(np.nan, -1)
+    week90['customer_prod_bought_dis_share'] = week90['customer_prod_bought_dis_share'].replace(np.nan, -1)
+    week90['customer_prod_dis_share'] = week90['customer_prod_dis_share'].replace(np.nan, -1)
+    week90['customer_prod_dis_offered_share'] = week90['customer_prod_dis_offered_share'].replace(np.nan, -1)
     
     'Unit Test Block II.a'
-    assert len(list(data.columns)) == 24
+    assert len(list(week90.columns)) == 24
     #all product_bought rows should be NaN but nothing else 
-    assert data.isna().sum().sum() == lags90.shape[0]
+    assert week90.isna().sum().sum() == week90.shape[0]
     
     'Store data'
-    data.sort_values(by=['week', 'shopper', 'product'], inplace=True)
-    data.to_parquet(path + '/week90_s2000_final.parquet')
+    week90.sort_values(by=['week', 'shopper', 'product'], inplace=True)
+    week90.to_parquet(path + '/week90_s2000_final.parquet')
     
     print('\nThe data set for week 90 is generated and saved as a parquet file to: ' + path)
     
-    lags90 = lags90.reset_index(drop=True)
+    week90 = week90.reset_index(drop=True)
     
-    return (lags90)
+    return week90
