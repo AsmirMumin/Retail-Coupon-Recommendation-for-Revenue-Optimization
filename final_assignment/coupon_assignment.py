@@ -101,10 +101,10 @@ def merge_predictions(X_test_90, X_test_d15, X_test_d20, X_test_d25, X_test_d30,
     X_test_d30['shopper'] = X_test_90['shopper']
     
     # add predicitons to respective test data sets 
-    X_test_d15['proba'] = pred_d15[::,0]
-    X_test_d20['proba'] = pred_d20[::,0]
-    X_test_d25['proba'] = pred_d25[::,0]
-    X_test_d30['proba'] = pred_d30[::,0]
+    X_test_d15['proba'] = pred_d15[::,1]
+    X_test_d20['proba'] = pred_d20[::,1]
+    X_test_d25['proba'] = pred_d25[::,1]
+    X_test_d30['proba'] = pred_d30[::,1]
     
     return X_test_d15, X_test_d20, X_test_d25, X_test_d30
 
@@ -149,7 +149,6 @@ def coupon_assignment(X_test_d15, X_test_d20, X_test_d25, X_test_d30):
     assert list(top5coupons_final.columns) == ['shopper', 'week', 'coupon', 'product', 'discount']
     assert max(top5coupons_final['coupon']) == 4 #or 5?????
     assert min(top5coupons_final['coupon']) == 0 #or 1?????
-    #assert list(top5coupons_final['discount']).unique() == [15, 20, 25, 30]
     assert top5coupons_final['shopper'].nunique() == 2000
 
     # returning output dataset
