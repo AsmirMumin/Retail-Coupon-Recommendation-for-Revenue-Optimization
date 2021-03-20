@@ -1,3 +1,8 @@
+"""
+The purpose of this module is to:
+* create negative samples in order to tackle class imblanace
+"""
+
 from scipy.sparse import csr_matrix
 import numpy as np
 import pandas as pd
@@ -12,6 +17,9 @@ class NegativeSampleGenerator():
         self.baskets = baskets
         
     def calculate_frequencies(self):
+        """
+        calculates the total frequencies of product purchases per shopper
+        """
         # get product frequency per customer
         for index, row in self.baskets.iterrows():
             for p in row["products"]:
@@ -35,6 +43,9 @@ class NegativeSampleGenerator():
         return self.total_frequency_only89
     
     def calculate_customer_preferences(self, min_frequency=3):
+        """
+        calculate the customer preferences bases on the total frequencies with a minimum support of min_frequency
+        """
         self.cons_preferences = dict()
         for consumer in range(0, self.no_customers):
             self.cons_preferences[consumer] = list()
@@ -44,10 +55,18 @@ class NegativeSampleGenerator():
         return self.cons_preferences
     
     def show_customer_preferences(self, n=5):
+        """
+        print method
+        """
         for i in range(n):
             print(f"{i}:\n{self.cons_preferences[i]}")
             
     def generate(self):
+        """
+        generate neagtive samples and
+        return: dataframe of negative samples per week per shopper
+        """
+        
         random.seed(42)
 
         self.df_negative_samples = pd.DataFrame(columns=["week", "shopper", "product"])
