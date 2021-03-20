@@ -1,3 +1,10 @@
+"""
+The purpose of this module is to:
+* create product clusters
+* provide TSNE plot
+* provide final category labels
+"""
+
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 from yellowbrick.cluster import KElbowVisualizer
@@ -7,17 +14,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class p2cluster():
-    """This class creates product clusters"""
+    """
+    This class creates product clusters
+    """
     
     def __init__(self, w2v_model):
-        """Class constructor"""
+        """
+        Class constructor
+        """
         self.w2v_model = w2v_model
         self.labels = []
         self.x = []
         self.y = []
     
     def tsne_train(self, perplexity=2, no_iterations=5000):
-        "Creates and TSNE model"
+        """
+        Creates TSNE model
+        """
         
         tokens = []
 
@@ -40,7 +53,9 @@ class p2cluster():
 
 
     def tsne_plot(self):
-        """Create TSNE plot"""
+        """
+        Create TSNE plot
+        """
         plt.figure(figsize=(8, 8))
         for i in range(len(self.x)):
             plt.scatter(self.x[i], self.y[i])
@@ -56,24 +71,32 @@ class p2cluster():
         plt.show()
         
     def elbow_plot(self, min_val=2, max_val=40):
-        """Create elbow plot"""
+        """
+        Create elbow plot
+        """
         model = KMeans()
         visualizer = KElbowVisualizer(model, k=(min_val, max_val))
         visualizer.fit(np.column_stack((self.x, self.y)))  # Fit the data to the visualizer
         visualizer.show()
         
     def train_cluster(self, nclut=25):
-        """Train kmeans clustering"""
+        """
+        Train kmeans clustering
+        """
         self.kmeans = KMeans(n_clusters=nclut, random_state=0).fit(np.column_stack((self.x, self.y)))
         
     def clust_plot(self):
-        """Plot the clustering results"""
+        """
+        Plot the clustering results
+        """
         p = sns.scatterplot(x=self.x, y=self.y, hue=self.kmeans.labels_, palette="deep") # other palette
         p.legend_.remove()
         plt.show()
         
     def get_categories(self):
-        """Return DF with product categories"""
+        """
+        Return DF with product categories
+        """
         product_categories = {
             "tsne_x": self.x,
             "tsne_y": self.y,
