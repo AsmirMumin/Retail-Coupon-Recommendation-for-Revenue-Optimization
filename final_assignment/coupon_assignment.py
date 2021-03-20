@@ -34,7 +34,7 @@ X_test_90 = week90_generate_dataset(path_datasets)
 # get week 90 testing data to predict on  
 def get_test_data():
     X_test_90 = week90_generate_dataset(path_datasets) 
-    X_test_90 = X_test_90.drop(['product_bought', 'shopper', 'product', 'purchase_w/o_dis', 'no_purchase_w_dis', 'discount_effect'], axis = 1)
+    X_test_90 = X_test_90.drop(['product_bought', 'shopper', 'product'], axis = 1)
     
     return X_test_90
 
@@ -68,7 +68,6 @@ def get_test_discounts(X_test_90):
     # returning discount test data sets 
     return X_test_d15, X_test_d20, X_test_d25, X_test_d30
     
-
 
 # create predictions using the trained LightGBM model 
 def predictions(X_test_d15, X_test_d20, X_test_d25, X_test_d30):
@@ -108,9 +107,6 @@ def merge_predictions(X_test_90, X_test_d15, X_test_d20, X_test_d25, X_test_d30)
     X_test_d30['proba'] = pred_d30
     
     return X_test_d15, X_test_d20, X_test_d25, X_test_d30
-
-
-
 
 def coupon_assignment(X_test_d15, X_test_d20, X_test_d25, X_test_d30):
     """
