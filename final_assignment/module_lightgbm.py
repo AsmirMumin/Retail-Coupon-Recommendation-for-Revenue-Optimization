@@ -17,7 +17,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import log_loss
 
-def predict_lightgbm(X_train, X_test, y_train, y_test, X_eval = None, y_eval = None, eval_set = False, output_probabilities = True, n_estimators = 300, early_stopping_rounds = 50, reg_alpha = 0.3, subsample = 0.5, learning_rate = 0.01, max_depth = 8):
+def predict_lightgbm(X_train, X_test, y_train, y_test, X_eval = None, y_eval = None, eval_set = False, output_probabilities = True, n_estimators = 300, early_stopping_rounds = 50, num_leaves = 1000, reg_alpha = 0, reg_lambda = 0.5, subsample = 0.5, learning_rate = 0.01, verbose = 200):
     
     """
     input: 
@@ -31,19 +31,20 @@ def predict_lightgbm(X_train, X_test, y_train, y_test, X_eval = None, y_eval = N
         output_probabilities: default = True, determines whether the output are probabilities or binary
         n_estimators: default = 300, number of boosting iterations
         early_stopping_rounds: default = 50, stops training if one metric does not improve for the given early_stopping_rounds
-        reg_alpha: default = 0.3, L1 regularisation, L1 >= 0, reduces overfitting
+        num_leaves: default = 1000, max. number of leaves per tree
+        reg_alpha: default = 0, L1 regularisation, L1 >= 0, reduces overfitting
+        reg_lambda: default = 0.5, L2 regularisation, L2 >= 0, reduces overfitting
         subsample: default = 0.5, randomly selects part of the data without resampling, 0 < subsample <= 1, reduces overfitting and speeds up training
         learning_rate: default = 0.01, shrinkage rate, learning_rate > 0
-        max_depth: default = 8, limits depth of model
         -> lightgbm parameters (source: https://lightgbm.readthedocs.io/en/latest/Parameters.html):
     
     output: 
-        y_pred
+        model
         plot that shows evaluation results over time (metrics: auc, logloss)
         for binary results: confusion matrix
         for probabilities results: confusion matrix, auc, binary logloss
     
-    save: lightGBM model, outputted predictions (either in binary format or in form of probabilities)
+    save: lightGBM model, outputted predictions (either in binary format or in form of probabilities dependung on set parameters)
     
     """
     assert type(X_train) == np.ndarray
@@ -55,7 +56,7 @@ def predict_lightgbm(X_train, X_test, y_train, y_test, X_eval = None, y_eval = N
         
         start = time.time()
     
-        model = lgbm.LGBMClassifier(objective = 'binary', reg_alpha = reg_alpha, subsample = subsample, learning_rate = learning_rate, max_depth = max_depth, n_estimators = n_estimators, metric = ['auc', 'logloss'], random_state = 42) 
+        model = lgbm.LGBMClassifier(objective = 'binary', num_leaves = num_leaves, reg_alpha = reg_alpha, reg_lambda = reg_lambda, subsample = subsample, learning_rate = learning_rate, n_estimators = n_estimators, metric = ['auc', 'logloss'], random_state = 42) 
         model.fit(X_train, y_train, verbose = verbose, eval_set = [(X_train, y_train), (X_eval, y_eval), (X_test, y_test)], early_stopping_rounds = early_stopping_rounds, eval_metric = ['auc', 'logloss'])
 
         print(model.best_score_)
@@ -71,7 +72,7 @@ def predict_lightgbm(X_train, X_test, y_train, y_test, X_eval = None, y_eval = N
         plt.show()
     
         #save the model
-        filename = 'lightgbm_model.pkl'
+        filename = 'lightgbm_model_final.pkl'
         with open(filename, 'wb') as file:
             pickle.dump(model, file)
     
@@ -79,7 +80,7 @@ def predict_lightgbm(X_train, X_test, y_train, y_test, X_eval = None, y_eval = N
         
         start = time.time()
     
-        model = lgbm.LGBMClassifier(objective = 'binary', reg_alpha = reg_alpha, subsample = subsample, learning_rate = learning_rate, max_depth = max_depth, n_estimators = n_estimators, metric = ['auc', 'logloss'], random_state = 42) 
+        model = lgbm.LGBMClassifier(objective = 'binary', num_leaves = num_leaves, reg_alpha = reg_alpha, reg_lambda = reg_lambda, subsample = subsample, learning_rate = learning_rate, n_estimators = n_estimators, metric = ['auc', 'logloss'], random_state = 42) 
         model.fit(X_train, y_train, verbose = verbose, eval_set = [(X_train, y_train), (X_test, y_test)], early_stopping_rounds = early_stopping_rounds, eval_metric = ['auc', 'logloss'])
 
         print(model.best_score_)
@@ -94,7 +95,7 @@ def predict_lightgbm(X_train, X_test, y_train, y_test, X_eval = None, y_eval = N
         plt.show()
         
         #save the model
-        filename = 'lightgbm_model.pkl'
+        filename = 'lightgbm_model_final.pkl'
         with open(filename, 'wb') as file:
             pickle.dump(model, file)
         
@@ -126,7 +127,5 @@ def predict_lightgbm(X_train, X_test, y_train, y_test, X_eval = None, y_eval = N
         
         print('Confusion Matrix: ', confusion_mat)
      
-    #save predictions
-    savetxt('y_pred.csv', y_pred, delimiter = ',')
     
-    return y_pred
+    return model

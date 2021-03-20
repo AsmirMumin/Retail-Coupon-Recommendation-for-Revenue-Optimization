@@ -31,7 +31,7 @@ def train_test_splitting(path, train_start, train_end, test_start, test_end, eva
     train = pd.read_parquet(path + '/train_s2000_final.parquet')
     test = pd.read_parquet(path + '/test_s2000_final.parquet')
     
-    print('The following features will be removed from the training data sets (besides the target variable product_bought): \nshopper, \nproduct, \npurchase_w/o_dis, \nno_purchase_w_dis, \ndiscount_effect, \nweek_basket_size and \nweek_basket_value. \nAmong others, reasons are target leakage and non-reproducibility for week 90.')
+    print('The following features will be removed from the data sets (besides the target variable product_bought): \nshopper, \nproduct, \npurchase_w/o_dis, \nno_purchase_w_dis, \discount_offered, \ndiscount_effect, \nweek_basket_size and \nweek_basket_value. \nAmong others, reasons are target leakage and non-reproducibility for week 90.')
 
     if eval_set:
         train = train[(train['week'] >= train_start) & (train['week'] <= train_end)]
@@ -43,9 +43,16 @@ def train_test_splitting(path, train_start, train_end, test_start, test_end, eva
         print('Testing Observations: %d' % (len(test)))
         print('Observations: %d' % (len(train) + len(test) + len(evaluation)))
         
-        X_train = train.drop(['product_bought', 'shopper', 'product', 'purchase_w/o_dis', 'no_purchase_w_dis', 'discount_effect', 'week_basket_size', 'week_basket_value'], axis = 1).values
-        X_eval = evaluation.drop(['product_bought', 'shopper', 'product', 'purchase_w/o_dis', 'no_purchase_w_dis', 'discount_effect', 'week_basket_size', 'week_basket_value'], axis = 1).values
-        X_test = test.drop(['product_bought', 'shopper', 'product', 'purchase_w/o_dis', 'no_purchase_w_dis', 'discount_effect', 'week_basket_size', 'week_basket_value'], axis = 1).values 
+        train['week'] = train['week'].astype('category')
+        train['category_label'] = train['category_label'].astype('category')
+        evaluation['week'] = evaluation['week'].astype('category')
+        evaluation['category_label'] = evaluation['category_label'].astype('category')
+        test['week'] = test['week'].astype('category')
+        test['category_label'] = test['category_label'].astype('category')
+        
+        X_train = train.drop(['product_bought', 'shopper', 'product', 'purchase_w/o_dis', 'no_purchase_w_dis', 'discount_effect', 'week_basket_size', 'week_basket_value', 'discount_offered'], axis = 1).values
+        X_eval = evaluation.drop(['product_bought', 'shopper', 'product', 'purchase_w/o_dis', 'no_purchase_w_dis', 'discount_effect', 'week_basket_size', 'week_basket_value', 'discount_offered'], axis = 1).values
+        X_test = test.drop(['product_bought', 'shopper', 'product', 'purchase_w/o_dis', 'no_purchase_w_dis', 'discount_effect', 'week_basket_size', 'week_basket_value', 'discount_offered'], axis = 1).values 
 
         y_train, y_eval, y_test = train[['product_bought']].values.reshape(-1), evaluation[['product_bought']].values.reshape(-1), test[['product_bought']].values.reshape(-1)
         
@@ -62,8 +69,13 @@ def train_test_splitting(path, train_start, train_end, test_start, test_end, eva
         print('Testing Observations: %d' % (len(test)))
         print('Observations: %d' % (len(train) + len(test)))
         
-        X_train = train.drop(['product_bought', 'shopper', 'product', 'purchase_w/o_dis', 'no_purchase_w_dis', 'discount_effect', 'week_basket_size', 'week_basket_value'], axis = 1).values
-        X_test = test.drop(['product_bought', 'shopper', 'product', 'purchase_w/o_dis', 'no_purchase_w_dis', 'discount_effect', 'week_basket_size', 'week_basket_value'], axis = 1).values 
+        train['week'] = train['week'].astype('category')
+        train['category_label'] = train['category_label'].astype('category')
+        test['week'] = test['week'].astype('category')
+        test['category_label'] = test['category_label'].astype('category')
+        
+        X_train = train.drop(['product_bought', 'shopper', 'product', 'purchase_w/o_dis', 'no_purchase_w_dis', 'discount_effect', 'week_basket_size', 'week_basket_value', 'discount_offered'], axis = 1).values
+        X_test = test.drop(['product_bought', 'shopper', 'product', 'purchase_w/o_dis', 'no_purchase_w_dis', 'discount_effect', 'week_basket_size', 'week_basket_value', 'discount_offered'], axis = 1).values 
 
         y_train, y_test = train[['product_bought']].values.reshape(-1), test[['product_bought']].values.reshape(-1)
         

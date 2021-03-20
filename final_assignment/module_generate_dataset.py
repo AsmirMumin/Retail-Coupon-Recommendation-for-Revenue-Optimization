@@ -189,9 +189,6 @@ def generate_dataset(path, train_start, train_end, test_start, test_end):
     #customer_prod_dis_offers: number discount offers of a product j for customer i
     tmp = data_train.groupby(['shopper', 'product'])['discount_offered'].agg('count').reset_index().rename(columns={'discount_offered': 'customer_prod_dis_offers'})
     data_train = pd.merge(data_train, tmp, on=['shopper', 'product'], how='left')
-    #customer_prod_dis_share: share product j was offered at discount and bought by customer i
-    tmp = data_train[(data_train['product_bought'] == 1)].groupby(['shopper', 'product'])['discount_offered'].agg('mean').reset_index().rename(columns={'discount_offered': 'customer_prod_dis_share'})
-    data_train = pd.merge(data_train, tmp, on=['shopper', 'product'], how='left')
     #customer_prod_dis_offered_share: share of deemed coupons per customer i
     tmp = data_train[(data_train['discount_offered'] == 1)].groupby(['shopper', 'product'])['product_bought'].agg('mean').reset_index().rename(columns={'product_bought': 'customer_prod_dis_offered_share'})
     data_train = pd.merge(data_train, tmp, on=['shopper', 'product'], how='left')
@@ -230,11 +227,10 @@ def generate_dataset(path, train_start, train_end, test_start, test_end):
     data_train['no_products_bought_per_product'] = data_train['no_products_bought_per_product'].replace(np.nan, -1)
     data_train['customer_prod_dis_purchases'] = data_train['customer_prod_dis_purchases'].replace(np.nan, -1)
     data_train['customer_prod_bought_dis_share'] = data_train['customer_prod_bought_dis_share'].replace(np.nan, -1)
-    data_train['customer_prod_dis_share'] = data_train['customer_prod_dis_share'].replace(np.nan, -1)
     data_train['customer_prod_dis_offered_share'] = data_train['customer_prod_dis_offered_share'].replace(np.nan, -1)
     
     'Unit Test Block II.a'
-    assert len(list(data_train.columns)) == 36
+    assert len(list(data_train.columns)) == 35
     assert data_train.isna().sum().sum() == 0
     assert data_train['product_bought'].nunique() == 2
     
@@ -304,9 +300,6 @@ def generate_dataset(path, train_start, train_end, test_start, test_end):
     #customer_prod_dis_offers: number discount offers of a product j for customer i
     tmp = data_test.groupby(['shopper', 'product'])['discount_offered'].agg('count').reset_index().rename(columns={'discount_offered': 'customer_prod_dis_offers'})
     data_test = pd.merge(data_test, tmp, on=['shopper', 'product'], how='left')
-    #customer_prod_dis_share: share product j was offered at discount and bought by customer i
-    tmp = data_test[(data_test['product_bought'] == 1)].groupby(['shopper', 'product'])['discount_offered'].agg('mean').reset_index().rename(columns={'discount_offered': 'customer_prod_dis_share'})
-    data_test = pd.merge(data_test, tmp, on=['shopper', 'product'], how='left')
     #customer_prod_dis_offered_share: share of deemed coupons per customer i
     tmp = data_test[(data_test['discount_offered'] == 1)].groupby(['shopper', 'product'])['product_bought'].agg('mean').reset_index().rename(columns={'product_bought': 'customer_prod_dis_offered_share'})
     data_test = pd.merge(data_test, tmp, on=['shopper', 'product'], how='left')
@@ -345,16 +338,15 @@ def generate_dataset(path, train_start, train_end, test_start, test_end):
     data_test['no_products_bought_per_product'] = data_test['no_products_bought_per_product'].replace(np.nan, -1)
     data_test['customer_prod_dis_purchases'] = data_test['customer_prod_dis_purchases'].replace(np.nan, -1)
     data_test['customer_prod_bought_dis_share'] = data_test['customer_prod_bought_dis_share'].replace(np.nan, -1)
-    data_test['customer_prod_dis_share'] = data_test['customer_prod_dis_share'].replace(np.nan, -1)
     data_test['customer_prod_dis_offered_share'] = data_test['customer_prod_dis_offered_share'].replace(np.nan, -1)
     
     'Unit Test Block II.b'
-    assert len(list(data_test.columns)) == 36
+    assert len(list(data_test.columns)) == 35
     assert data_test.isna().sum().sum() == 0
     assert data_test['product_bought'].nunique() == 2
     
     'Store data_test'
-    data_test.sort_values(by=['week', 'shopper', 'product'], inplace=True)
+    data_test.sort_values(by=['week', 'shopper', 'product'], inplace = True)
     data_test.to_parquet(path + '/test_s2000_final.parquet')
     
     'Unit Test Block III'
@@ -365,7 +357,7 @@ def generate_dataset(path, train_start, train_end, test_start, test_end):
     
     print('\nData sets (train and test) are generated and saved as a parquet file to: ' + path)
     
-    data_train = data_train.reset_index(drop=True)
-    data_test = data_test.reset_index(drop=True)
+    data_train = data_train.reset_index(drop = True)
+    data_test = data_test.reset_index(drop = True)
     
     return (data_train, data_test)

@@ -40,7 +40,6 @@ def week90_generate_dataset(path):
     avg_no_weeks_between_two_purchases = pd.read_parquet(path + '/avg_no_weeks_between_two_purchases.parquet')
     #time that has passed since the shopper i bought product j the last time
     lags = pd.read_parquet(path + '/lags.parquet')
-    lags = lags.drop('product_bought', axis=1)
     lags90 = lags[lags['week'] == 90]
     #distribution of purchases, e.g whether they occurs frequently or rather in the first/last half of the timeseries
     purchase_temporal_distribution = pd.read_parquet(path + '/purchase_temporal_distribution.parquet')
@@ -106,9 +105,15 @@ def week90_generate_dataset(path):
     max_price = max_price.rename(columns = {'price': 'max_price'})
     #merge max price to week90
     week90 = pd.merge(week90, max_price, on = 'product', how = 'left')
+    #minimal price of product
+    min_price = data.groupby('product')['price'].agg(min).reset_index()
+    min_price = min_price.rename(columns = {'price': 'min_price'})
+    #merge max price to week90
+    week90 = pd.merge(week90, min_price, on = 'product', how = 'left')
     
     'Clear Memory'
     del max_price
+    del min_price
     
     'Feature Engineering Part III'
             
@@ -153,9 +158,6 @@ def week90_generate_dataset(path):
     #customer_prod_dis_offers: number discount offers of a product j for customer i
     tmp = data.groupby(['shopper', 'product'])['discount_offered'].agg('count').reset_index().rename(columns={'discount_offered': 'customer_prod_dis_offers'})
     week90 = pd.merge(week90, tmp, on=['shopper', 'product'], how='left')
-    #customer_prod_dis_share: share product j was offered at discount and bought by customer i
-    tmp = data[(data['product_bought'] == 1)].groupby(['shopper', 'product'])['discount_offered'].agg('mean').reset_index().rename(columns={'discount_offered': 'customer_prod_dis_share'})
-    week90 = pd.merge(week90, tmp, on=['shopper', 'product'], how='left')
     #customer_prod_dis_offered_share: share of deemed coupons per customer i
     tmp = data[(data['discount_offered'] == 1)].groupby(['shopper', 'product'])['product_bought'].agg('mean').reset_index().rename(columns={'product_bought': 'customer_prod_dis_offered_share'})
     week90 = pd.merge(week90, tmp, on=['shopper', 'product'], how='left')
@@ -168,9 +170,26 @@ def week90_generate_dataset(path):
     
     #--------------------------
     
-    #WEEK X CUSTOMER DIMENSION & #CUSTOMER DIMENSION
-    #weekly feature on can be adapted to the week90 data set because we don't know anything about the exact purchase behaviour in week 90 yet
+    #WEEK X CUSTOMER DIMENSION
+    #weekly feature on can be adapted to the week90 data set because we don't know anything about the exact purchase behaviour in week 90 yet; however,
+    #they are needed to compute the mean_basket_size and mean_basket_value which will be merge to the week90 data set
     
+    #week_basket_size: number products bought by a customer i in week t 
+    tmp = data[(data['product_bought'] == 1)].groupby(['week', 'shopper'])['product'].agg('count').reset_index().rename(columns={'product': 'week_basket_size'})
+    data = pd.merge(data, tmp, on=['week', 'shopper'], how='left')  
+    #week_basket_value: sum products in € by a customer i in week t 
+    tmp = data[(data['product_bought'] == 1)].groupby(['week', 'shopper'])['price'].agg('sum').reset_index().rename(columns={'price': 'week_basket_value'})
+    data = pd.merge(data, tmp, on=['week', 'shopper'], how='left')
+    
+    #--------------------------
+            
+    #CUSTOMER DIMENSION
+    #mean_basket_size: the average basket size of customer i      
+    tmp = data[(data['product_bought'] == 1)].groupby(['shopper'])['week_basket_size'].agg('mean').reset_index().rename(columns={'week_basket_size': 'mean_basket_size'})
+    week90 = pd.merge(week90, tmp, on='shopper', how='left')
+    #mean_basket_value: the average basket value in € of customer i
+    tmp = data[(data['product_bought'] == 1)].groupby(['shopper'])['week_basket_value'].agg('mean').reset_index().rename(columns={'week_basket_value': 'mean_basket_value'})
+    week90 = pd.merge(week90, tmp, on='shopper', how='left')
     #--------------------------
                      
     'Imputing/Fixing Missing Values'
@@ -179,20 +198,19 @@ def week90_generate_dataset(path):
     week90['no_products_bought_per_product'] = week90['no_products_bought_per_product'].replace(np.nan, -1)
     week90['customer_prod_dis_purchases'] = week90['customer_prod_dis_purchases'].replace(np.nan, -1)
     week90['customer_prod_bought_dis_share'] = week90['customer_prod_bought_dis_share'].replace(np.nan, -1)
-    week90['customer_prod_dis_share'] = week90['customer_prod_dis_share'].replace(np.nan, -1)
     week90['customer_prod_dis_offered_share'] = week90['customer_prod_dis_offered_share'].replace(np.nan, -1)
     
     'Unit Test Block II.a'
-    assert len(list(week90.columns)) == 24
+    assert len(list(week90.columns)) == 27
     #all product_bought rows should be NaN but nothing else 
     assert week90.isna().sum().sum() == week90.shape[0]
     
     'Store data'
-    week90.sort_values(by=['week', 'shopper', 'product'], inplace=True)
+    week90.sort_values(by = ['week', 'shopper', 'product'], inplace = True)
     week90.to_parquet(path + '/week90_s2000_final.parquet')
     
     print('\nThe data set for week 90 is generated and saved as a parquet file to: ' + path)
     
-    week90 = week90.reset_index(drop=True)
+    week90 = week90.reset_index(drop = True)
     
     return week90
