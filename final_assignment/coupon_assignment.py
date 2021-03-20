@@ -28,15 +28,15 @@ def load_model(filename):
     return model 
 
 # get week 90 testing data 
-X_test_90 = week90_generate_dataset(path_datasets)
+# X_test_90 = week90_generate_dataset(path_datasets)
 
 
 # get week 90 testing data to predict on  
-def get_test_data():
-    X_test_90 = week90_generate_dataset(path_datasets) 
-    X_test_90 = X_test_90.drop(['product_bought', 'shopper', 'product'], axis = 1)
+#def get_test_data():
+ #   X_test_90 = week90_generate_dataset(path_datasets) 
+ #   X_test_90 = X_test_90.drop(['product_bought', 'shopper', 'product'], axis = 1)
     
-    return X_test_90
+ #   return X_test_90
 
 
 # create prediction datasets 
@@ -48,36 +48,36 @@ def get_test_discounts(X_test_90):
     # test data for discount = 15
     X_test_d15 = X_test_90.copy()
     X_test_d15['discount'] = 15 
-    X_test_d15['price'] = X_test_d15['price'] * 0.85
+    X_test_d15['price'] = X_test_d15['max_price'] * 0.85
     
     # test data for discount = 20 
     X_test_d20 = X_test_90.copy()
     X_test_d20['discount'] = 20
-    X_test_d20['price'] = X_test_d20['price'] * 0.80
+    X_test_d20['price'] = X_test_d20['max_price'] * 0.80
     
     # test data for discount = 25
     X_test_d25 = X_test_90.copy()
     X_test_d25['discount'] = 25
-    X_test_d25['price'] = X_test_d25['price'] * 0.75
+    X_test_d25['price'] = X_test_d25['max_price'] * 0.75
     
     # test data for discount = 30 
     X_test_d30 = X_test_90.copy()
     X_test_d30['discount'] = 30
-    X_test_d30['price'] = X_test_d30['price'] * 0.70
+    X_test_d30['price'] = X_test_d30['max_price'] * 0.70
     
     # returning discount test data sets 
     return X_test_d15, X_test_d20, X_test_d25, X_test_d30
     
 
 # create predictions using the trained LightGBM model 
-def predictions(X_test_d15, X_test_d20, X_test_d25, X_test_d30):
-    pred1 = model.predict_proba(X_test_d15.values)
-    pred2 = model.predict_proba(X_test_d20.values)
-    pred3 = model.predict_proba(X_test_d25.values)
-    pred4 = model.predict_proba(X_test_d30.values)
+def predictions(model, X_test_d15, X_test_d20, X_test_d25, X_test_d30):
+    pred_d15 = model.predict_proba(X_test_d15.values)
+    pred_d20 = model.predict_proba(X_test_d20.values)
+    pred_d25 = model.predict_proba(X_test_d25.values)
+    pred_d30 = model.predict_proba(X_test_d30.values)
     return pred_d15, pred_d20, pred_d25, pred_d30
 
-def merge_predictions(X_test_90, X_test_d15, X_test_d20, X_test_d25, X_test_d30):
+def merge_predictions(X_test_90, X_test_d15, X_test_d20, X_test_d25, X_test_d30, pred_d15, pred_d20, pred_d25, pred_d30):
     """
     data structure: 
         week [optional]
@@ -101,10 +101,10 @@ def merge_predictions(X_test_90, X_test_d15, X_test_d20, X_test_d25, X_test_d30)
     X_test_d30['shopper'] = X_test_90['shopper']
     
     # add predicitons to respective test data sets 
-    X_test_d15['proba'] = pred_d15
-    X_test_d20['proba'] = pred_d20
-    X_test_d25['proba'] = pred_d25
-    X_test_d30['proba'] = pred_d30
+    X_test_d15['proba'] = pred_d15[::,0]
+    X_test_d20['proba'] = pred_d20[::,0]
+    X_test_d25['proba'] = pred_d25[::,0]
+    X_test_d30['proba'] = pred_d30[::,0]
     
     return X_test_d15, X_test_d20, X_test_d25, X_test_d30
 
@@ -139,16 +139,19 @@ def coupon_assignment(X_test_d15, X_test_d20, X_test_d25, X_test_d30):
     # assinging coupons 
     top5coupons['coupon'] = top5coupons.groupby("shopper").cumcount()
     
+    #resorting the final dataframe
+    top5coupons_final = top5coupons[['shopper', 'week', 'coupon', 'product', 'discount']]
+    
     # unit test 
-    assert top5coupons.shape[0] == 10000 #10.000 = 2000*5
-    assert top5coupons.shape[1] == 5 #shopper, week, coupon, product, discount
-    assert top5coupons.isna().sum().sum() == 0
-    assert list(top5coupons.columns) == ['shopper', 'week', 'coupon', 'product' 'discount']
-    assert max(top5coupons['coupon']) == 5 #did this change to 4
-    assert min(top5coupons['coupon']) == 1 #did this change to 0
-    assert list(top5coupons['discount']).unique() == [15, 20, 25, 30]
-    assert top5coupons['shopper'].nunique() == 2000
+    assert top5coupons_final.shape[0] == 10000 #10.000 = 2000*5
+    assert top5coupons_final.shape[1] == 5 #shopper, week, coupon, product, discount
+    assert top5coupons_final.isna().sum().sum() == 0
+    assert list(top5coupons_final.columns) == ['shopper', 'week', 'coupon', 'product', 'discount']
+    assert max(top5coupons_final['coupon']) == 4 #or 5?????
+    assert min(top5coupons_final['coupon']) == 0 #or 1?????
+    #assert list(top5coupons_final['discount']).unique() == [15, 20, 25, 30]
+    assert top5coupons_final['shopper'].nunique() == 2000
 
     # returning output dataset
-    return top5coupons
+    return top5coupons_final
 
