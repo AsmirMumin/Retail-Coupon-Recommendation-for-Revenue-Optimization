@@ -11,6 +11,7 @@ __Students:__
  - Christopher Gerling (598370)
  - Asmir Muminovic (600582)
  - Arash Moussavi Tasouj (600651)
+ 
 
 ## Content
 
@@ -48,4 +49,3 @@ __Students:__
 3. Set "path_datasets" to the path with the parquet files
 4. Run all code cells
 ```
-Note: Sometimes it is possible to load saved models in order to skip time-consuming computation.
