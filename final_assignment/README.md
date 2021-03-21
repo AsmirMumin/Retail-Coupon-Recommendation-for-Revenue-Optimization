@@ -3,13 +3,15 @@
 
 ## Organization
 
-__Institute:__ Humboldt University Berlin, Institute of Marketing <br>
+__Institute:__ Humboldt University Berlin, Institute of Marketing <br><br>
 __Students:__ 
  - Sophie Bonczyk (561846)
  - Anna Franziska Bothe (576309)
  - Christopher Gerling (598370)
  - Asmir Muminovic (600582)
- - Arash Moussavi Tasouj (600651)<br>
+ - Arash Moussavi Tasouj (600651)
+ <br>
+ 
 __Semester:__ WS 2020/21 <br>
 
 
@@ -39,6 +41,7 @@ __Semester:__ WS 2020/21 <br>
 
 1. This project is implemented with Python 3.8.
 2. The final assignment is implemented in Jupyter Lab 2.2.
+3. The required packages with their versions are listed in requirements.txt
 
 
 ## Setup
@@ -48,3 +51,4 @@ __Semester:__ WS 2020/21 <br>
 3. Set "path_datasets" to the path with the parquet files
 4. Run all code cells
 ```
+Note: Sometimes it is possible to load saved models in order to skip time-consuming computation.
