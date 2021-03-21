@@ -11,8 +11,6 @@ __Students:__
  - Christopher Gerling (598370)
  - Asmir Muminovic (600582)
  - Arash Moussavi Tasouj (600651)
- <br>
-
 
 ## Content
 
