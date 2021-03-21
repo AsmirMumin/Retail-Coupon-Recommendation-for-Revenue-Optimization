@@ -22,16 +22,17 @@ __Students:__
 ├── coupons_predictions.parquet          # final predictions for coupon assignments
 ├── README.md                            # this readme file
 ├── requirements.txt                     # configuration file with package versions
-├── coupon_assignment.py                 # module for final coupon assignment
+├── module_baseline_heuristic_model      # module for calculating heuristic model
+├── module_coupon_assignment.py          # module for final coupon assignment
 ├── module_clustering.py                 # module for clustering, TSNE and category generation
 ├── module_generate_dataset.py           # module for generating datasets that can be used for the model
 ├── module_lags.py                       # module for calculating lagged features
 ├── module_lightgbm.py                   # module for training the LightBGM model
 ├── module_merge_datasets.py             # module for merging all dataframes to one
 ├── module_negatives.py                  # module for calculating negative samples
+├── module_p2v.py                        # module for training a gensim P2V model
 ├── module_train_test_splitting.py       # module for creating a train-test-split
-├── module_week90_generate_dataset.py    # module for simulating products of week 90
-└── p2v_module.py                        # module for training a gensim P2V model
+└── module_week90_generate_dataset.py    # module for simulating products of week 90
 ```
 
 
