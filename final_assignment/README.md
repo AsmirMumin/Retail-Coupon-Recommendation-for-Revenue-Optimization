@@ -3,7 +3,8 @@
 
 ## Organization
 
-__Institute:__ Humboldt University Berlin, Institute of Marketing <br><br>
+__Institute:__ Humboldt University Berlin, Institute of Marketing <br>
+__Semester:__ WS 2020/21 <br>
 __Students:__ 
  - Sophie Bonczyk (561846)
  - Anna Franziska Bothe (576309)
@@ -11,8 +12,6 @@ __Students:__
  - Asmir Muminovic (600582)
  - Arash Moussavi Tasouj (600651)
  <br>
- 
-__Semester:__ WS 2020/21 <br>
 
 
 ## Content
