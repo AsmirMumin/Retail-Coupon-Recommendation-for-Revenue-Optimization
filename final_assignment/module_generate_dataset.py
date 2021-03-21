@@ -121,7 +121,6 @@ def generate_dataset(path, train_start, train_end, test_start, test_end):
     data_test = data[((data['week'] >= test_start) & (data['week'] <= test_end))]
     
     'Clear Memory'
-    del basket_df
     del coupon_df
     del negative_sample_df
     del categories
@@ -136,8 +135,8 @@ def generate_dataset(path, train_start, train_end, test_start, test_end):
     #impute missing prices by the max price minues the offered discount (because this was the price the shoppers was offered);
     #for the missing prices of the negative sample df it will automatically insert the max_price since discount is 0
     data_train['price'] = np.where(data_train['price'] == 0, data_train['max_price'] * (1 - data_train['discount'] / 100), data_train['price'])
-    #minimal price of product
-    min_price = data_train.groupby('product')['price'].agg(min).reset_index()
+    #minimal price of product; we need to take the minimal price of the bought products; thus, from the basket_df; otherwise, the min_price will also be 0 since we imputed the NaNs with 0 before
+    min_price = basket_df.groupby('product')['price'].agg(min).reset_index()
     min_price = min_price.rename(columns={'price': 'min_price'})
     #merge min price to the df
     data_train = pd.merge(data_train, min_price, on='product', how='left')
@@ -247,13 +246,14 @@ def generate_dataset(path, train_start, train_end, test_start, test_end):
     #impute missing prices by the max price minues the offered discount (because this was the price the shoppers was offered);
     #for the missing prices of the negative sample df it will automatically insert the max_price since discount is 0
     data_test['price'] = np.where(data_test['price'] == 0, data_test['max_price'] * (1 - data_test['discount'] / 100), data_test['price'])
-    #minimal price of product
-    min_price = data_test.groupby('product')['price'].agg(min).reset_index()
+    #minimal price of product; we need to take the minimal price of the bought products; thus, from the basket_df; otherwise, the min_price will also be 0 since we imputed the NaNs with 0 before
+    min_price = basket_df.groupby('product')['price'].agg(min).reset_index()
     min_price = min_price.rename(columns={'price': 'min_price'})
     #merge min price to the df
     data_test = pd.merge(data_test, min_price, on='product', how='left')
     
     'Clear Memory'
+    del basket_df
     del max_price
     del min_price
     

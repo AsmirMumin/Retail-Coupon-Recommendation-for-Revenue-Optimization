@@ -94,7 +94,6 @@ def week90_generate_dataset(path):
     assert week90.isna().sum().sum() == week90.shape[0]
     
     'Clear Memory'
-    del basket_df
     del coupon_df
     del negative_sample_df
     del categories
@@ -105,8 +104,8 @@ def week90_generate_dataset(path):
     max_price = max_price.rename(columns = {'price': 'max_price'})
     #merge max price to week90
     week90 = pd.merge(week90, max_price, on = 'product', how = 'left')
-    #minimal price of product
-    min_price = data.groupby('product')['price'].agg(min).reset_index()
+    #minimal price of product; we need to take the minimal price of the bought products; thus, from the basket_df; otherwise, the min_price will also be 0 since we imputed the NaNs with 0 before
+    min_price = basket_df.groupby('product')['price'].agg(min).reset_index()
     min_price = min_price.rename(columns = {'price': 'min_price'})
     #merge max price to week90
     week90 = pd.merge(week90, min_price, on = 'product', how = 'left')
@@ -114,6 +113,7 @@ def week90_generate_dataset(path):
     'Clear Memory'
     del max_price
     del min_price
+    del basket_df
     
     'Feature Engineering Part III'
             
