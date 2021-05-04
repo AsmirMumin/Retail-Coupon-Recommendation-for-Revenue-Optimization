@@ -1,4 +1,4 @@
-# Maximizing Revenue with Individualized Coupon Optimization - Final Assignment for Course "Machine Learning in Marketing"
+# Maximizing Revenue with Personalized Coupon Recommendations
 
 In 2020, U.S. retailers distributed over 470 billion coupons for packaged consumer goods. At the same time, less than 1 percent of the coupons issued were redeemed (Statista, 2021). Yet, 90 percent of all consumers use coupons, 43 percent of them regularly (very often). Nevertheless, half of consumers would redeem more coupons if it was easier to find coupons for the items they really need. (Valassis, 2019)
 
